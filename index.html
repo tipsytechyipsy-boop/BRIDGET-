@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRIDGET – IRL Gaming & Entertainment</title>
+  <meta name="description" content="BRIDGET is a real-life gaming platform launching in Goa: mysteries, adventures, treasure hunts and interactive challenges. Everything is connected. Can you find the connection?">
+  <meta name="theme-color" content="#07080c">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <canvas id="sky" aria-hidden="true"></canvas>
+
+  <div class="demo-bar">Front-end demo · accounts, applications and payments are simulated and stored only in this browser</div>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav-inner">
+      <a href="#/" class="logo" aria-label="BRIDGET home">
+        <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+          <circle cx="5" cy="22" r="2.5" fill="currentColor"/>
+          <circle cx="16" cy="8" r="2.5" fill="currentColor"/>
+          <circle cx="27" cy="22" r="2.5" fill="currentColor"/>
+          <path d="M5 22 L16 8 L27 22 M5 22 H27" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".6"/>
+        </svg>
+        <span>BRIDGET</span>
+      </a>
+      <button class="nav-toggle" data-action="toggle-nav" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+      <nav class="nav-links" id="nav-links">
+        <a href="#/experiences" data-nav="experiences">Experiences</a>
+        <a href="#/announcements" data-nav="announcements">Announcements</a>
+        <a href="#/media" data-nav="media">Media</a>
+        <span class="nav-auth" id="nav-auth"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>
+        <div class="logo small"><span>BRIDGET</span></div>
+        <p class="muted">IRL Gaming &amp; Entertainment.<br>Goa first. Then everywhere.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#/experiences">Experiences</a>
+        <a href="#/announcements">Announcements</a>
+        <a href="#/media">Media</a>
+        <a href="#/dashboard">My dashboard</a>
+        <a href="#/console" class="mono">Organiser console (demo)</a>
+      </div>
+      <p class="muted mono tiny">Everything is connected. Can you find the connection?</p>
+    </div>
+  </footer>
+
+  <div id="modal" class="modal" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
