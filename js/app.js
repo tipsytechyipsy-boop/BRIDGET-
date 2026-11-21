@@ -87,9 +87,10 @@
     const anns = db.anns().slice(0, 3);
     return `
     <section class="hero">
+      <div class="hero-rings" data-rings aria-hidden="true"></div>
       <div class="wrap hero-inner">
         <p class="eyebrow reveal">Goa · IRL Gaming &amp; Entertainment · Season One</p>
-        <h1 class="hero-title reveal">BRIDGET</h1>
+        <h1 class="hero-title glitch" data-text="BRIDGET" aria-label="BRIDGET">${[...'BRIDGET'].map((c, i) => `<span style="--i:${i}" aria-hidden="true">${c}</span>`).join('')}</h1>
         <p class="hero-tag reveal">Connecting the Unconnected.</p>
         <p class="hero-sub reveal">Everything is connected. <span class="gold">Can you find the connection?</span></p>
         <div class="cta-row reveal">
@@ -104,7 +105,10 @@
       <div class="scroll-hint">Look closer</div>
     </section>
 
+    ${marquees()}
+
     <section class="section">
+      <div class="ghost-word" data-parallax="0.18" aria-hidden="true">CONNECTED</div>
       <div class="wrap">
         <p class="eyebrow reveal">The concept</p>
         <p class="concept-lead reveal">Not an escape room. Not a scavenger hunt. <em>Something in between, and something more.</em> Real streets, real people, real puzzles, and a story that only reveals itself to those who play.</p>
@@ -131,6 +135,7 @@
     </section>
 
     <section class="section">
+      <div class="ghost-word right" data-parallax="-0.15" aria-hidden="true">CASES</div>
       <div class="wrap">
         <div class="section-head"><div><p class="eyebrow reveal">Upcoming experiences</p><h2 class="reveal">Choose your first case.</h2></div><a class="btn ghost reveal" href="#/experiences">All experiences →</a></div>
         <div class="grid-exp">${D.experiences.slice(0, 3).map(expCard).join('')}</div>
@@ -157,6 +162,7 @@
           <p class="eyebrow reveal">The long game</p>
           <h2 class="reveal">Goa first.<br>Then everywhere.</h2>
           <p class="muted reveal">BRIDGET starts on the streets of Goa and grows into a nationwide network of real-life games. Every city has a story hidden in plain sight. We intend to find them all, and we’ll need players who can keep a secret.</p>
+          <div class="radar reveal" data-radar aria-hidden="true"></div>
         </div>
         <ul class="cities reveal">
           <li>Goa <span class="pill open">Live · Season One</span></li>
@@ -176,6 +182,15 @@
         <div class="cta-row reveal"><a class="btn primary" href="#/${me() ? 'dashboard' : 'join'}">${me() ? 'Go to my dashboard' : 'Create your account'}</a></div>
       </div>
     </section>`;
+  }
+  function marquees() {
+    const big = ['Mystery', 'Adventure', 'Treasure hunts', 'Ciphers', 'Real streets', 'Real people', 'Interactive challenges', 'Goa'];
+    const small = ['Everything is connected', 'Can you find the connection', 'Season One', 'Seats are limited', 'Look closer'];
+    const band = (words, outlineEvery) => {
+      const set = words.map((w, i) => `<span class="${outlineEvery && i % 2 ? 'o' : ''}">${w}</span><i>✦</i>`).join('');
+      return `<div class="marquee-track">${set}${set}</div>`;
+    };
+    return `<div class="marquees" aria-hidden="true"><div class="marquee">${band(big, true)}</div><div class="marquee rev">${band(small, false)}</div></div>`;
   }
   const pillar = (n, t, p, g) => `<div class="pillar"><span class="num">${n}</span><svg class="glyph" viewBox="0 0 44 44" aria-hidden="true" stroke-width="1.3">${g}</svg><h3>${t}</h3><p>${p}</p></div>`;
   const step = (n, t, p) => `<div class="step reveal"><div class="node">${n}</div><h3>${t}</h3><p>${p}</p></div>`;
@@ -568,6 +583,8 @@
     if (match) { html = match[1](...path.match(match[0]).slice(1)); nav = match[2]; } else html = notFound();
     if (html === '') return; // redirected
     app.innerHTML = html;
+    if (path !== lastPath) { app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter'); }
+    document.dispatchEvent(new CustomEvent('bridget:render', { detail: { path } }));
     $$('[data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === nav));
     $('#nav').classList.remove('open');
     renderNavAuth();
@@ -601,7 +618,11 @@
       const d = Math.floor(diff / 86400); diff -= d * 86400;
       const h = Math.floor(diff / 3600); diff -= h * 3600;
       const m = Math.floor(diff / 60); const s = Math.floor(diff - m * 60);
-      const set = (u, v) => { const b = $(`[data-u="${u}"]`, el); if (b) b.textContent = String(v).padStart(2, '0'); };
+      const set = (u, v) => {
+        const b = $(`[data-u="${u}"]`, el); const val = String(v).padStart(2, '0');
+        if (!b || b.textContent === val) return;
+        b.textContent = val; b.classList.remove('tick'); void b.offsetWidth; b.classList.add('tick');
+      };
       set('d', d); set('h', h); set('m', m); set('s', s);
     });
   }
@@ -760,22 +781,68 @@
       pts = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22, r: Math.random() * 1.3 + 0.4 }));
       if (reduce) draw();
     }
-    function draw() {
+    const signals = []; // gold pulses travelling along connections
+    const waves = [];   // click shockwaves
+    let t0 = 0;
+    function draw(now = 0) {
       ctx.clearRect(0, 0, w, h);
+      t0 = now;
       for (const p of pts) {
-        if (!reduce) { p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > w) p.vx *= -1; if (p.y < 0 || p.y > h) p.vy *= -1; }
+        if (!reduce) {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0 || p.x > w) { p.vx *= -1; p.x = Math.max(0, Math.min(w, p.x)); }
+          if (p.y < 0 || p.y > h) { p.vy *= -1; p.y = Math.max(0, Math.min(h, p.y)); }
+          if (Math.hypot(p.vx, p.vy) > 0.3) { p.vx *= 0.965; p.vy *= 0.965; } // settle after a shockwave
+        }
       }
+      ctx.lineWidth = 1;
       for (let i = 0; i < pts.length; i++) {
         const a = pts[i];
         for (let j = i + 1; j < pts.length; j++) {
           const b = pts[j]; const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-          if (d < 14400) { ctx.strokeStyle = `rgba(110,200,205,${(1 - d / 14400) * 0.16})`; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+          if (d < 14400) {
+            ctx.strokeStyle = `rgba(110,200,205,${(1 - d / 14400) * 0.16})`; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+            if (!reduce && signals.length < 12 && Math.random() < 0.00035) signals.push({ a: i, b: j, t: 0, s: 0.006 + Math.random() * 0.01 });
+          }
         }
         const dm = (a.x - mouse.x) ** 2 + (a.y - mouse.y) ** 2;
         if (dm < 32400) { ctx.strokeStyle = `rgba(212,168,87,${(1 - dm / 32400) * 0.55})`; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke(); }
       }
-      for (const p of pts) { ctx.fillStyle = 'rgba(236,232,223,.65)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }
+      for (let k = signals.length - 1; k >= 0; k--) {
+        const s = signals[k]; s.t += s.s;
+        const a = pts[s.a], b = pts[s.b];
+        if (!a || !b || s.t >= 1) { signals.splice(k, 1); continue; }
+        const x = a.x + (b.x - a.x) * s.t, y = a.y + (b.y - a.y) * s.t;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, 9);
+        g.addColorStop(0, 'rgba(255,225,160,.95)'); g.addColorStop(0.3, 'rgba(212,168,87,.5)'); g.addColorStop(1, 'rgba(212,168,87,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill();
+        // light the trail behind the pulse
+        ctx.strokeStyle = 'rgba(212,168,87,.35)'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(x, y); ctx.stroke();
+      }
+      for (let k = waves.length - 1; k >= 0; k--) {
+        const wv = waves[k]; wv.r += 7;
+        const o = 1 - wv.r / 320;
+        if (o <= 0) { waves.splice(k, 1); continue; }
+        ctx.strokeStyle = `rgba(212,168,87,${o * 0.6})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(wv.x, wv.y, wv.r, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = `rgba(95,208,198,${o * 0.3})`; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(wv.x, wv.y, wv.r * 0.7, 0, Math.PI * 2); ctx.stroke();
+      }
+      for (const p of pts) {
+        const tw = 0.45 + 0.35 * Math.sin(t0 / 700 + p.x); // twinkle
+        ctx.fillStyle = `rgba(236,232,223,${reduce ? 0.65 : tw})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
       if (!reduce) requestAnimationFrame(draw);
+    }
+    if (!reduce) {
+      addEventListener('pointerdown', (e) => {
+        if (e.target.closest('input, textarea, select')) return;
+        waves.push({ x: e.clientX, y: e.clientY, r: 0 });
+        for (const p of pts) {
+          const dx = p.x - e.clientX, dy = p.y - e.clientY, d = Math.hypot(dx, dy);
+          if (d > 0 && d < 240) { const f = ((240 - d) / 240) * 2.4; p.vx += (dx / d) * f; p.vy += (dy / d) * f; }
+        }
+      });
     }
     addEventListener('resize', size);
     addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; if (reduce) draw(); });
